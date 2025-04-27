@@ -94,3 +94,28 @@ qdrant = QdrantVectorStore.from_existing_collection(
     prefer_grpc=True,
     grpc_port=QDRANT_GRPC_PORT,
 )
+
+# query qdrant vector store
+# results = qdrant.similarity_search(
+#    query="How to install Steam on Arch Linux?",
+#    k=4,
+# )
+# async query
+# results = await qdrant.asimilarity_search(
+#    query="How to install Steam on Arch Linux?",
+#    k=4,
+# )
+
+# query with score
+results = qdrant.similarity_search_with_score(
+    query="How to install Steam on Arch Linux?",
+    k=4,
+)
+doc, score = results[0]
+print(f"Score: {score}\n")
+print(doc)
+
+# query by vector embedding
+embedding = embeddings.embed_query("How to install Steam on Arch Linux?")
+results_embedding = qdrant.similarity_search_by_vector(embedding)
+print(results_embedding[0])
