@@ -34,6 +34,7 @@ print()
 # use prompt template
 system_template = "Translate the following from English to {language}"
 
+# possible roles are: system, user, assistant, tool
 prompt_template = ChatPromptTemplate.from_messages(
     [
         ("system", system_template),  # tuple of (role/class, template)
