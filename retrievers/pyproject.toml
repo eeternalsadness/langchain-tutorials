@@ -1,0 +1,11 @@
+[project]
+name = "retrievers"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-community>=0.3.22",
+    "langchain-ollama>=0.3.2",
+    "langchain-text-splitters>=0.3.8",
+]
