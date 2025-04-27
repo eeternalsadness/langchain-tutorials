@@ -4,10 +4,14 @@ from langchain_community.document_loaders import ObsidianLoader
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
+from langchain_qdrant import QdrantVectorStore
+# from qdrant_client import QdrantClient
 
 # constants
 CHUNK_SIZE = 300
 CHUNK_OVERLAP = 40
+QDRANT_URL = "http://127.0.0.1:53366"  # minikube
+QDRANT_GRPC_PORT = 53366
 
 # generate sample documents
 # a Document represents a chunk of a larger document
@@ -33,7 +37,7 @@ print(f"{docs[0].page_content[:200]}\n")  # print out first 200 chars
 print(docs[0].metadata)
 
 # text splitting
-# split markdown by headers https://python.langchain.com/docs/how_to/markdown_header_metadata_splitter/
+# split markdown by headers (https://python.langchain.com/docs/how_to/markdown_header_metadata_splitter/)
 headers_to_split = [
     ("#", "Header 1"),
     ("##", "Header 2"),
@@ -70,3 +74,23 @@ vector_2 = embeddings.embed_query(splits[1].page_content)
 assert len(vector_1) == len(vector_2)
 print(f"Generated vectors of length {len(vector_1)}\n")
 print(vector_1[:10])
+
+# store embeddings in qdrant (https://python.langchain.com/docs/integrations/vectorstores/qdrant/)
+# init from documents
+# qdrant = QdrantVectorStore.from_documents(
+#    splits,
+#    embeddings,
+#    url=QDRANT_URL,
+#    prefer_grpc=True,
+#    grpc_port=QDRANT_GRPC_PORT,  # need to specify this, otherwise it connects to the default grpc port
+#    collection_name="obsidian",
+# )
+
+# use existing qdrant collection
+qdrant = QdrantVectorStore.from_existing_collection(
+    embedding=embeddings,
+    collection_name="obsidian",
+    url=QDRANT_URL,
+    prefer_grpc=True,
+    grpc_port=QDRANT_GRPC_PORT,
+)

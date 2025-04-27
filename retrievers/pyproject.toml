@@ -7,5 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "langchain-community>=0.3.22",
     "langchain-ollama>=0.3.2",
+    "langchain-qdrant>=0.2.0",
     "langchain-text-splitters>=0.3.8",
 ]
