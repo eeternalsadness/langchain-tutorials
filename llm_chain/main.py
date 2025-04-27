@@ -1,5 +1,6 @@
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import ChatPromptTemplate
 
 # init model
 model = ChatOllama(
@@ -10,7 +11,7 @@ model = ChatOllama(
 # init messages
 messages = [
     SystemMessage("Translate the following from English to Vietnamese"),
-    HumanMessage("Hello"),
+    HumanMessage("It's a good day to go camping today."),
 ]
 
 # print output to stdout
@@ -28,3 +29,24 @@ Tokens/s: {(output.response_metadata["eval_count"] * 10**9 / output.response_met
 # stream output to stdout
 for token in model.stream(messages):
     print(token.content, end="|")  # '|' separates each token
+print()
+
+# use prompt template
+system_template = "Translate the following from English to {language}"
+
+prompt_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", system_template),  # tuple of (role/class, template)
+        ("user", "{text}"),
+    ]
+)
+# pass in a dictionary of template keys & values
+prompt = prompt_template.invoke(
+    {
+        "language": "Vietnamese",
+        "text": "Let's go out for lunch!",
+    }
+)
+
+response = model.invoke(prompt)
+print(response.content)
