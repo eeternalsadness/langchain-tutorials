@@ -1,11 +1,14 @@
 import os
+from typing import List
 from langchain_core.documents import Document
 from langchain_community.document_loaders import ObsidianLoader
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings
 from langchain_qdrant import QdrantVectorStore
+
 # from qdrant_client import QdrantClient
+from langchain_core.runnables import chain
 
 # constants
 CHUNK_SIZE = 300
@@ -119,3 +122,22 @@ print(doc)
 embedding = embeddings.embed_query("How to install Steam on Arch Linux?")
 results_embedding = qdrant.similarity_search_by_vector(embedding)
 print(results_embedding[0])
+
+
+# retriever
+# @chain
+# def retriever(query: str) -> List[Document]:
+#    return qdrant.similarity_search(query, k=5)
+
+# use vector store's as_retriever()
+retriever = qdrant.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 4},
+)
+
+retriever.batch(
+    [
+        "How to install Steam on Arch Linux?",
+        "What do you need to install Hyprland on Arch Linux?",
+    ]
+)
