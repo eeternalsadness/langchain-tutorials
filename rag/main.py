@@ -26,6 +26,13 @@ OBSIDIAN_FOLDERS = [
     "3-resources",
     "Periodic Notes",
 ]
+PROMPT = """
+You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know.
+Question: {question}
+Context: {context}
+Answer:
+"""
+QUESTION = "How to install Steam on Arch Linux?"
 
 
 # load only necessary folders in Obsidian Vault
@@ -109,7 +116,7 @@ class State(TypedDict):
 
 # langgraph nodes
 def retrieve(state: State):
-    retrieved_docs = qdrant.similarity_search(state["question"])
+    retrieved_docs = qdrant.similarity_search(state["question"], k=5)
     return {"context": retrieved_docs}
 
 
@@ -142,14 +149,29 @@ graph = graph_builder.compile()
 
 
 # proompting
-prompt = """
-You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know.
-Question: {question}
-Context: {context}
-Answer:
-"""
-prompt_template = ChatPromptTemplate.from_template(prompt)
+qdrant = QdrantVectorStore.from_existing_collection(
+    embedding=get_embeddings(MODEL),
+    collection_name="obsidian",
+    url=QDRANT_URL,
+    prefer_grpc=True,
+    grpc_port=QDRANT_GRPC_PORT,
+)
+
+prompt_template = ChatPromptTemplate.from_template(PROMPT)
 model = ChatOllama(
     model=MODEL,
     temperature=TEMPERATURE,
 )
+
+# use graph
+result = graph.invoke({"question": QUESTION})
+
+print(f"Context: {result['context']}\n\n")
+print(f"Answer: {result['answer']}")
+
+# stream tokens
+for message, metadata in graph.stream(
+    {"question": QUESTION},
+    stream_mode="messages",
+):
+    print(message.content, end="")
