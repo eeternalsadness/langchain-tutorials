@@ -12,6 +12,7 @@ from langchain_qdrant import QdrantVectorStore
 from langchain_core.runnables import chain
 
 # constants
+MODEL = "llama3.2:3b"
 CHUNK_SIZE = 300
 CHUNK_OVERLAP = 40
 QDRANT_URL = "http://127.0.0.1:53366"  # minikube
@@ -71,3 +72,36 @@ def split_docs(
     splits = text_splitter.split_documents(md_splits)
 
     return splits
+
+
+def get_embeddings(model: str) -> OllamaEmbeddings:
+    embeddings = OllamaEmbeddings(model=model)
+    return embeddings
+
+
+def init_qdrant(
+    splits: List[Document],
+    model: str,
+    qdrant_url: str,
+    qdrant_grpc_port: int,
+    collection_name: str,
+) -> QdrantVectorStore:
+    # init from documents
+    qdrant = QdrantVectorStore.from_documents(
+        splits,
+        get_embeddings(model),
+        url=qdrant_url,
+        prefer_grpc=True,
+        grpc_port=qdrant_grpc_port,  # need to specify this, otherwise it connects to the default grpc port
+        collection_name=collection_name,
+    )
+
+    return qdrant
+
+
+docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
+print(f"Docs: {len(docs)}")
+splits = split_docs(docs, 500, 100)
+print(f"Splits: {len(splits)}")
+print("Initializing Qdrant")
+qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
