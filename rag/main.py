@@ -1,21 +1,21 @@
 import os
 import asyncio
 import time
-from typing import List
+from typing_extensions import List, TypedDict
 from langchain_core.documents import Document
 from langchain_community.document_loaders import ObsidianLoader
 from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings
+from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_qdrant import QdrantVectorStore
-
-# from qdrant_client import QdrantClient
-from langchain_core.runnables import chain
+from langchain_core.prompts import ChatPromptTemplate
+from langgraph.graph import START, StateGraph
 
 # constants
 MODEL = "llama3.2:3b"
-CHUNK_SIZE = 300
-CHUNK_OVERLAP = 40
+TEMPERATURE = 0.2
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 100
 QDRANT_URL = "http://127.0.0.1:53366"  # minikube
 QDRANT_GRPC_PORT = 53366
 OBSIDIAN_FOLDERS = [
@@ -100,12 +100,56 @@ def init_qdrant(
     return qdrant
 
 
+# state (things to keep track of) of the application
+class State(TypedDict):
+    question: str
+    context: List[Document]
+    answer: str
+
+
+# langgraph nodes
+def retrieve(state: State):
+    retrieved_docs = qdrant.similarity_search(state["question"])
+    return {"context": retrieved_docs}
+
+
+def generate(state: State):
+    docs_content = "\n\n".join(doc.page_content for doc in state["context"])
+    messages = prompt_template.invoke(
+        {"question": state["question"], "context": docs_content}
+    )
+    response = model.invoke(messages)
+
+    return {"answer": response.content}
+
+
+# compile graph
+graph_builder = StateGraph(State).add_sequence([retrieve, generate])
+graph_builder.add_edge(START, "retrieve")
+graph = graph_builder.compile()
+
+
+# prepare data
 docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
 print(f"Docs: {len(docs)}")
-splits = split_docs(docs, 500, 100)
+splits = split_docs(docs, CHUNK_SIZE, CHUNK_OVERLAP)
 print(f"Splits: {len(splits)}")
 print("Initializing Qdrant")
 start_time = time.time()
 qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
 end_time = time.time()
 print(f"Time elapsed: {end_time - start_time:.2f} seconds")
+
+
+# proompting
+prompt = """
+You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know.
+Question: {question}
+Context: {context}
+Answer:
+"""
+prompt_template = ChatPromptTemplate.from_template(prompt)
+model = ChatOllama(
+    model=MODEL,
+    temperature=TEMPERATURE,
+)
