@@ -1,6 +1,7 @@
 import os
 import asyncio
 import time
+import sys
 from typing_extensions import List, TypedDict
 from langchain_core.documents import Document
 from langchain_community.document_loaders import ObsidianLoader
@@ -14,8 +15,8 @@ from langgraph.graph import START, StateGraph
 # constants
 MODEL = "llama3.2:3b"
 TEMPERATURE = 0.2
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
 QDRANT_URL = "http://127.0.0.1:53366"  # minikube
 QDRANT_GRPC_PORT = 53366
 OBSIDIAN_FOLDERS = [
@@ -24,7 +25,6 @@ OBSIDIAN_FOLDERS = [
     "1-projects",
     "2-areas",
     "3-resources",
-    "Periodic Notes",
 ]
 PROMPT = """
 You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know.
@@ -32,7 +32,7 @@ Question: {question}
 Context: {context}
 Answer:
 """
-QUESTION = "How to install Steam on Arch Linux?"
+QUESTION = sys.argv[1]
 
 
 # load only necessary folders in Obsidian Vault
@@ -112,6 +112,8 @@ class State(TypedDict):
     question: str
     context: List[Document]
     answer: str
+    input_tokens: int
+    tokens_per_s: float
 
 
 # langgraph nodes
@@ -127,7 +129,13 @@ def generate(state: State):
     )
     response = model.invoke(messages)
 
-    return {"answer": response.content}
+    return {
+        "answer": response.content,
+        "input_tokens": response.usage_metadata["input_tokens"],
+        "tokens_per_s": response.response_metadata["eval_count"]
+        * 10**9
+        / response.response_metadata["eval_duration"],
+    }
 
 
 # compile graph
@@ -180,3 +188,9 @@ print(f"\nAnswer: {result['answer']}")
 #    stream_mode="messages",
 # ):
 #    print(message.content, end="")
+
+# print diagnostics
+print(f"""
+Input tokens: {result["input_tokens"]}
+Tokens/s: {result["tokens_per_s"]:.2f} tokens/s
+""")
