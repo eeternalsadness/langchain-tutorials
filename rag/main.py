@@ -166,12 +166,17 @@ model = ChatOllama(
 # use graph
 result = graph.invoke({"question": QUESTION})
 
-print(f"Context: {result['context']}\n\n")
-print(f"Answer: {result['answer']}")
+print("Context:\n")
+for i in range(len(result["context"])):
+    print(f"""{i + 1}:
+  Metadata: {result["context"][i].metadata}
+  Content:
+    {result["context"][i].page_content}\n""")
+print(f"\nAnswer: {result['answer']}")
 
 # stream tokens
-for message, metadata in graph.stream(
-    {"question": QUESTION},
-    stream_mode="messages",
-):
-    print(message.content, end="")
+# for message, metadata in graph.stream(
+#    {"question": QUESTION},
+#    stream_mode="messages",
+# ):
+#    print(message.content, end="")
