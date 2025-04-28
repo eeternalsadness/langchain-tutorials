@@ -130,15 +130,15 @@ graph = graph_builder.compile()
 
 
 # prepare data
-docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
-print(f"Docs: {len(docs)}")
-splits = split_docs(docs, CHUNK_SIZE, CHUNK_OVERLAP)
-print(f"Splits: {len(splits)}")
-print("Initializing Qdrant")
-start_time = time.time()
-qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
-end_time = time.time()
-print(f"Time elapsed: {end_time - start_time:.2f} seconds")
+# docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
+# print(f"Docs: {len(docs)}")
+# splits = split_docs(docs, CHUNK_SIZE, CHUNK_OVERLAP)
+# print(f"Splits: {len(splits)}")
+# print("Initializing Qdrant")
+# start_time = time.time()
+# qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
+# end_time = time.time()
+# print(f"Time elapsed: {end_time - start_time:.2f} seconds")
 
 
 # proompting
