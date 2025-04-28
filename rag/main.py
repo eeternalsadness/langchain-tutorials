@@ -27,11 +27,12 @@ OBSIDIAN_FOLDERS = [
     "3-resources",
 ]
 PROMPT = """
-You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know.
+You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. The context consists of markdown texts that are personal notes on some subjects. Pay attention to the headers in the metadata, which should tell you the general idea of the text. Use those headers to make sure that the context is relevant to the question. If you don't know the answer, just say that you don't know.
 Question: {question}
 Context: {context}
 Answer:
 """
+TOP_K = 15
 QUESTION = sys.argv[1]
 
 
@@ -118,7 +119,7 @@ class State(TypedDict):
 
 # langgraph nodes
 def retrieve(state: State):
-    retrieved_docs = qdrant.similarity_search(state["question"], k=5)
+    retrieved_docs = qdrant.similarity_search(state["question"], k=TOP_K)
     return {"context": retrieved_docs}
 
 
