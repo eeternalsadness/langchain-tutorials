@@ -43,5 +43,31 @@ async def load_docs(folders: List[str]) -> List[Document]:
     return all_docs
 
 
-docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
-print(len(docs))
+def split_docs(
+    docs: List[Document], chunk_size: int, chunk_overlap: int
+) -> List[Document]:
+    headers_to_split = [
+        ("#", "Header 1"),
+        ("##", "Header 2"),
+        ("###", "Header 3"),
+    ]
+
+    md_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split,
+        strip_headers=False,  # preserve headers in the chunks
+    )
+
+    md_splits = []
+    for doc in docs:
+        md_splits.extend(md_splitter.split_text(doc.page_content))
+
+    # text splitter for each markdown chunk
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+    )
+
+    # split all markdown chunks
+    splits = text_splitter.split_documents(md_splits)
+
+    return splits
