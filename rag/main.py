@@ -1,5 +1,6 @@
 import os
 import asyncio
+import time
 from typing import List
 from langchain_core.documents import Document
 from langchain_community.document_loaders import ObsidianLoader
@@ -104,4 +105,7 @@ print(f"Docs: {len(docs)}")
 splits = split_docs(docs, 500, 100)
 print(f"Splits: {len(splits)}")
 print("Initializing Qdrant")
+start_time = time.time()
 qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
+end_time = time.time()
+print(f"Time elapsed: {end_time - start_time:.2f} seconds")
