@@ -33,7 +33,6 @@ Context: {context}
 Answer:
 """
 TOP_K = 15
-QUESTION = sys.argv[1]
 
 
 # load only necessary folders in Obsidian Vault
@@ -172,26 +171,31 @@ model = ChatOllama(
     temperature=TEMPERATURE,
 )
 
-# use graph
-result = graph.invoke({"question": QUESTION})
+# proompt loop
+while True:
+    # prompt for question
+    question = input("Talk-tuah: ")
 
-print("Context:\n")
-for i in range(len(result["context"])):
-    print(f"""{i + 1}:
+    # use graph
+    result = graph.invoke({"question": question})
+
+    print("Context:\n")
+    for i in range(len(result["context"])):
+        print(f"""{i + 1}:
   Metadata: {result["context"][i].metadata}
   Content:
-    {result["context"][i].page_content}\n""")
-print(f"\nAnswer: {result['answer']}")
+      {result["context"][i].page_content}\n""")
+    print(f"\nAnswer: {result['answer']}")
 
-# stream tokens
-# for message, metadata in graph.stream(
-#    {"question": QUESTION},
-#    stream_mode="messages",
-# ):
-#    print(message.content, end="")
+    # stream tokens
+    # for message, metadata in graph.stream(
+    #    {"question": QUESTION},
+    #    stream_mode="messages",
+    # ):
+    #    print(message.content, end="")
 
-# print diagnostics
-print(f"""
+    # print diagnostics
+    print(f"""
 Input tokens: {result["input_tokens"]}
 Tokens/s: {result["tokens_per_s"]:.2f} tokens/s
-""")
+    """)
