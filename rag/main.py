@@ -19,6 +19,7 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 QDRANT_URL = "http://127.0.0.1:53366"  # minikube
 QDRANT_GRPC_PORT = 53366
+QDRANT_COLLECTION = "obsidian-test"
 OBSIDIAN_FOLDERS = [
     "0-inbox",
     "00-zet",
@@ -52,7 +53,7 @@ async def load_docs(folders: List[str]) -> List[Document]:
     return all_docs
 
 
-def split_docs(
+def split_docs_md(
     docs: List[Document], chunk_size: int, chunk_overlap: int
 ) -> List[Document]:
     headers_to_split = [
@@ -78,6 +79,19 @@ def split_docs(
 
     # split all markdown chunks
     splits = text_splitter.split_documents(md_splits)
+
+    return splits
+
+
+# obsidian notes are small in nature so maybe there's no need to split by headers
+def split_docs_text(
+    docs: List[Document], chunk_size: int, chunk_overlap: int
+) -> List[Document]:
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+    )
+    splits = text_splitter.split_documents(docs)
 
     return splits
 
@@ -145,21 +159,21 @@ graph = graph_builder.compile()
 
 
 # prepare data
-# docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
-# print(f"Docs: {len(docs)}")
-# splits = split_docs(docs, CHUNK_SIZE, CHUNK_OVERLAP)
-# print(f"Splits: {len(splits)}")
-# print("Initializing Qdrant")
-# start_time = time.time()
-# qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, "obsidian")
-# end_time = time.time()
-# print(f"Time elapsed: {end_time - start_time:.2f} seconds")
+docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
+print(f"Docs: {len(docs)}")
+splits = split_docs_text(docs, CHUNK_SIZE, CHUNK_OVERLAP)
+print(f"Splits: {len(splits)}")
+print("Initializing Qdrant")
+start_time = time.time()
+qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, QDRANT_COLLECTION)
+end_time = time.time()
+print(f"Time elapsed: {end_time - start_time:.2f} seconds")
 
 
 # proompting
 qdrant = QdrantVectorStore.from_existing_collection(
     embedding=get_embeddings(MODEL),
-    collection_name="obsidian",
+    collection_name=QDRANT_COLLECTION,
     url=QDRANT_URL,
     prefer_grpc=True,
     grpc_port=QDRANT_GRPC_PORT,
