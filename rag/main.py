@@ -9,7 +9,7 @@ from langchain_text_splitters import MarkdownHeaderTextSplitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_ollama import OllamaEmbeddings, ChatOllama
 from langchain_qdrant import QdrantVectorStore
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langgraph.graph import START, StateGraph
 
 # constants
@@ -19,7 +19,7 @@ CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 QDRANT_URL = "http://127.0.0.1:53366"  # minikube
 QDRANT_GRPC_PORT = 53366
-QDRANT_COLLECTION = "obsidian-test"
+QDRANT_COLLECTION = "obsidian"
 OBSIDIAN_FOLDERS = [
     "0-inbox",
     "00-zet",
@@ -159,15 +159,15 @@ graph = graph_builder.compile()
 
 
 # prepare data
-docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
-print(f"Docs: {len(docs)}")
-splits = split_docs_text(docs, CHUNK_SIZE, CHUNK_OVERLAP)
-print(f"Splits: {len(splits)}")
-print("Initializing Qdrant")
-start_time = time.time()
-qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, QDRANT_COLLECTION)
-end_time = time.time()
-print(f"Time elapsed: {end_time - start_time:.2f} seconds")
+# docs = asyncio.run(load_docs(OBSIDIAN_FOLDERS))
+# print(f"Docs: {len(docs)}")
+# splits = split_docs_text(docs, CHUNK_SIZE, CHUNK_OVERLAP)
+# print(f"Splits: {len(splits)}")
+# print("Initializing Qdrant")
+# start_time = time.time()
+# qdrant = init_qdrant(splits, MODEL, QDRANT_URL, QDRANT_GRPC_PORT, QDRANT_COLLECTION)
+# end_time = time.time()
+# print(f"Time elapsed: {end_time - start_time:.2f} seconds")
 
 
 # proompting
@@ -179,7 +179,7 @@ qdrant = QdrantVectorStore.from_existing_collection(
     grpc_port=QDRANT_GRPC_PORT,
 )
 
-prompt_template = ChatPromptTemplate.from_template(PROMPT)
+prompt_template = PromptTemplate.from_template(PROMPT)
 model = ChatOllama(
     model=MODEL,
     temperature=TEMPERATURE,
